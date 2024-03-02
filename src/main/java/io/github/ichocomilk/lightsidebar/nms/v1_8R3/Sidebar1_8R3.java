@@ -2,6 +2,7 @@ package io.github.ichocomilk.lightsidebar.nms.v1_8R3;
 
 import java.util.Collection;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
@@ -20,7 +21,7 @@ public final class Sidebar1_8R3 implements Sidebar {
     private static final CustomObjective OBJECTIVE = new CustomObjective(SCOREBARD);
 
     private static final PacketPlayOutScoreboardObjective CREATE, DELETE;
-    private PacketPlayOutScoreboardDisplayObjective title;
+    private static final PacketPlayOutScoreboardDisplayObjective DISPLAY;
 
     private PacketPlayOutScoreboardScore[] lines;
 
@@ -31,6 +32,7 @@ public final class Sidebar1_8R3 implements Sidebar {
         SCOREBARD.setDisplaySlot(1, OBJECTIVE);
         CREATE = new PacketPlayOutScoreboardObjective(OBJECTIVE, 0);
         DELETE = new PacketPlayOutScoreboardObjective(OBJECTIVE, 1);
+        DISPLAY = new PacketPlayOutScoreboardDisplayObjective(1, OBJECTIVE);
     }
 
     @Override
@@ -39,7 +41,7 @@ public final class Sidebar1_8R3 implements Sidebar {
             final EntityPlayer entityPlayer = ((CraftPlayer)player).getHandle();
             entityPlayer.playerConnection.sendPacket(DELETE);
             entityPlayer.playerConnection.sendPacket(CREATE);
-            entityPlayer.playerConnection.sendPacket(title);
+            entityPlayer.playerConnection.sendPacket(DISPLAY);
             for (final PacketPlayOutScoreboardScore line : lines) {
                 entityPlayer.playerConnection.sendPacket(line);
             }
@@ -51,7 +53,7 @@ public final class Sidebar1_8R3 implements Sidebar {
         final EntityPlayer entityPlayer = ((CraftPlayer)player).getHandle();
         entityPlayer.playerConnection.sendPacket(DELETE);
         entityPlayer.playerConnection.sendPacket(CREATE);
-        entityPlayer.playerConnection.sendPacket(title);
+        entityPlayer.playerConnection.sendPacket(DISPLAY);
         for (final PacketPlayOutScoreboardScore line : lines) {
             entityPlayer.playerConnection.sendPacket(line);
         }
@@ -59,9 +61,7 @@ public final class Sidebar1_8R3 implements Sidebar {
 
     @Override
     public void sendTitle(Collection<Player> players) {
-        final CustomObjective newObjective = new CustomObjective(SCOREBARD);
-        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(new CustomObjective(SCOREBARD), 2);
-        newObjective.setDisplayName(OBJECTIVE.getDisplayName());
+        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(OBJECTIVE, 2);
         for (final Player player : players) {
             ((CraftPlayer)player).getHandle().playerConnection.sendPacket(packet);
         }
@@ -69,9 +69,7 @@ public final class Sidebar1_8R3 implements Sidebar {
 
     @Override
     public void sendTitle(Player player) {
-        final CustomObjective newObjective = new CustomObjective(SCOREBARD);
-        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(new CustomObjective(SCOREBARD), 2);
-        newObjective.setDisplayName(OBJECTIVE.getDisplayName());
+        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(OBJECTIVE, 2);
         ((CraftPlayer)player).getHandle().playerConnection.sendPacket(packet);
     }
 
@@ -92,22 +90,22 @@ public final class Sidebar1_8R3 implements Sidebar {
     @Override
     public void setTitle(String title) {
         OBJECTIVE.setDisplayName(title);
-        this.title = new PacketPlayOutScoreboardDisplayObjective(1, OBJECTIVE);
     }
 
     @Override
     public void setLines(Object[] lines) {
         if (lines instanceof PacketPlayOutScoreboardScore[] newLines) {
             this.lines = newLines;
-            return;
         }
     }
 
     @Override
     public Object[] createLines(String[] lines) {
+        int blankSpaces = 0;
         final PacketPlayOutScoreboardScore[] packetLines = new PacketPlayOutScoreboardScore[lines.length];
         for (int i = 0; i < lines.length; i++) {
-            packetLines[i] = new PacketPlayOutScoreboardScore(new CustomScore(SCOREBARD, OBJECTIVE, lines[i], lines.length - i));
+            final String line = (lines[i].isEmpty()) ? StringUtils.repeat(' ', blankSpaces++) : lines[i];
+            packetLines[i] = new PacketPlayOutScoreboardScore(new CustomScore(SCOREBARD, OBJECTIVE, line, lines.length - i));
         }
         return packetLines;
     }
