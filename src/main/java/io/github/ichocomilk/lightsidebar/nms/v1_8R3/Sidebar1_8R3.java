@@ -20,7 +20,7 @@ public final class Sidebar1_8R3 implements Sidebar {
     private static final CustomObjective OBJECTIVE = new CustomObjective(SCOREBARD);
 
     private static final PacketPlayOutScoreboardObjective CREATE, DELETE;
-    private static final PacketPlayOutScoreboardDisplayObjective DISPLAY;
+    private PacketPlayOutScoreboardDisplayObjective title;
 
     private PacketPlayOutScoreboardScore[] lines;
 
@@ -31,7 +31,6 @@ public final class Sidebar1_8R3 implements Sidebar {
         SCOREBARD.setDisplaySlot(1, OBJECTIVE);
         CREATE = new PacketPlayOutScoreboardObjective(OBJECTIVE, 0);
         DELETE = new PacketPlayOutScoreboardObjective(OBJECTIVE, 1);
-        DISPLAY = new PacketPlayOutScoreboardDisplayObjective(1, OBJECTIVE);
     }
 
     @Override
@@ -40,7 +39,7 @@ public final class Sidebar1_8R3 implements Sidebar {
             final EntityPlayer entityPlayer = ((CraftPlayer)player).getHandle();
             entityPlayer.playerConnection.sendPacket(DELETE);
             entityPlayer.playerConnection.sendPacket(CREATE);
-            entityPlayer.playerConnection.sendPacket(DISPLAY);
+            entityPlayer.playerConnection.sendPacket(title);
             for (final PacketPlayOutScoreboardScore line : lines) {
                 entityPlayer.playerConnection.sendPacket(line);
             }
@@ -52,7 +51,7 @@ public final class Sidebar1_8R3 implements Sidebar {
         final EntityPlayer entityPlayer = ((CraftPlayer)player).getHandle();
         entityPlayer.playerConnection.sendPacket(DELETE);
         entityPlayer.playerConnection.sendPacket(CREATE);
-        entityPlayer.playerConnection.sendPacket(DISPLAY);
+        entityPlayer.playerConnection.sendPacket(title);
         for (final PacketPlayOutScoreboardScore line : lines) {
             entityPlayer.playerConnection.sendPacket(line);
         }
@@ -93,6 +92,7 @@ public final class Sidebar1_8R3 implements Sidebar {
     @Override
     public void setTitle(String title) {
         OBJECTIVE.setDisplayName(title);
+        this.title = new PacketPlayOutScoreboardDisplayObjective(1, OBJECTIVE);
     }
 
     @Override
