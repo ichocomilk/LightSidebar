@@ -18,17 +18,18 @@ import net.minecraft.server.v1_8_R3.Scoreboard;
 public final class Sidebar1_8R3 implements Sidebar {
 
     private static final Scoreboard SCOREBARD = MinecraftServer.getServer().getWorld().scoreboard;
-    private static final CustomObjective OBJECTIVE = new CustomObjective(SCOREBARD);
 
     private static final PacketPlayOutScoreboardObjective CREATE, DELETE;
     private static final PacketPlayOutScoreboardDisplayObjective DISPLAY;
 
     private PacketPlayOutScoreboardScore[] lines;
+    private final CustomObjective objective = new CustomObjective(SCOREBARD);
 
     static {
         if (SCOREBARD.getObjective("sidebar") == null) {
             SCOREBARD.registerObjective("sidebar", IScoreboardCriteria.b);
         }
+        final CustomObjective OBJECTIVE = new CustomObjective(SCOREBARD);
         SCOREBARD.setDisplaySlot(1, OBJECTIVE);
         CREATE = new PacketPlayOutScoreboardObjective(OBJECTIVE, 0);
         DELETE = new PacketPlayOutScoreboardObjective(OBJECTIVE, 1);
@@ -61,7 +62,7 @@ public final class Sidebar1_8R3 implements Sidebar {
 
     @Override
     public void sendTitle(Collection<Player> players) {
-        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(OBJECTIVE, 2);
+        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(objective, 2);
         for (final Player player : players) {
             ((CraftPlayer)player).getHandle().playerConnection.sendPacket(packet);
         }
@@ -69,7 +70,7 @@ public final class Sidebar1_8R3 implements Sidebar {
 
     @Override
     public void sendTitle(Player player) {
-        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(OBJECTIVE, 2);
+        final PacketPlayOutScoreboardObjective packet = new PacketPlayOutScoreboardObjective(objective, 2);
         ((CraftPlayer)player).getHandle().playerConnection.sendPacket(packet);
     }
 
@@ -89,7 +90,7 @@ public final class Sidebar1_8R3 implements Sidebar {
 
     @Override
     public void setTitle(String title) {
-        OBJECTIVE.setDisplayName(title);
+        objective.setDisplayName(title);
     }
 
     @Override
@@ -104,8 +105,11 @@ public final class Sidebar1_8R3 implements Sidebar {
         int blankSpaces = 0;
         final PacketPlayOutScoreboardScore[] packetLines = new PacketPlayOutScoreboardScore[lines.length];
         for (int i = 0; i < lines.length; i++) {
-            final String line = (lines[i].isEmpty()) ? StringUtils.repeat(' ', blankSpaces++) : lines[i];
-            packetLines[i] = new PacketPlayOutScoreboardScore(new CustomScore(SCOREBARD, OBJECTIVE, line, lines.length - i));
+            final String line = (lines[i] == null || lines[i].isEmpty())
+                ? StringUtils.repeat(' ', blankSpaces++)
+                : lines[i];
+
+            packetLines[i] = new PacketPlayOutScoreboardScore(new CustomScore(SCOREBARD, objective, line, lines.length - i));
         }
         return packetLines;
     }
